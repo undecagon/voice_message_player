@@ -180,7 +180,9 @@ class VoiceController extends MyTicker {
     await _player.dispose();
     positionStream?.cancel();
     playerStateStream?.cancel();
-    animController.dispose();
+    try {
+      animController.dispose();
+    } catch (e) {}
   }
 
   /// Seeks to the given [duration].
