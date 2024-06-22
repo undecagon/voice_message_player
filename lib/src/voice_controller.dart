@@ -41,6 +41,7 @@ class VoiceController extends MyTicker {
   late AnimationController animController;
   final AudioPlayer _player = AudioPlayer();
   final bool isFile;
+  final String? cacheKey;
   PlayStatus playStatus = PlayStatus.init;
   PlaySpeed speed = PlaySpeed.x1;
   ValueNotifier updater = ValueNotifier(null);
@@ -48,6 +49,7 @@ class VoiceController extends MyTicker {
   StreamSubscription? positionStream;
   StreamSubscription? playerStateStream;
   double? downloadProgress = 0;
+  final int noiseCount;
 
   /// Gets the current playback position of the voice.
   double get currentMillSeconds {
@@ -84,8 +86,10 @@ class VoiceController extends MyTicker {
     required this.onComplete,
     required this.onPause,
     required this.onPlaying,
+    this.noiseCount = 24,
     this.onError,
     this.randoms,
+    this.cacheKey,
   }) {
     if (randoms?.isEmpty ?? true) _setRandoms();
     animController = AnimationController(
@@ -120,7 +124,7 @@ class VoiceController extends MyTicker {
             onPlaying();
           } else if (fileResponse is DownloadProgress) {
             _updateUi();
-            print(downloadProgress);
+            // print(downloadProgress);
             downloadProgress = fileResponse.progress;
           }
         });
@@ -205,7 +209,8 @@ class VoiceController extends MyTicker {
     if (isFile) {
       return audioSrc;
     }
-    final p = await DefaultCacheManager().getSingleFile(audioSrc);
+    final p =
+        await DefaultCacheManager().getSingleFile(audioSrc, key: cacheKey);
     return p.path;
   }
 
@@ -213,7 +218,8 @@ class VoiceController extends MyTicker {
     if (isFile) {
       throw Exception("This method is not applicable for local files.");
     }
-    return DefaultCacheManager().getFileStream(audioSrc, withProgress: true);
+    return DefaultCacheManager()
+        .getFileStream(audioSrc, key: cacheKey, withProgress: true);
   }
 
   void cancelDownload() {
@@ -276,7 +282,7 @@ class VoiceController extends MyTicker {
 
   void _setRandoms() {
     randoms = [];
-    for (var i = 0; i < 44; i++) {
+    for (var i = 0; i < noiseCount; i++) {
       randoms!.add(5.74.w() * Random().nextDouble() + .26.w());
     }
   }
